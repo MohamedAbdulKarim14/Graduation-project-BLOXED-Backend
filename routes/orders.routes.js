@@ -121,7 +121,7 @@ router.post('/', verifyToken, async (req, res) => {
       totalAmount: calculatedTotal,
       paymentMethod: paymentMethod,
       paypalOrderId: paymentMethod === 'paypal' ? paypalOrderId : undefined,
-      status: paymentMethod === 'card' || paymentMethod === 'paypal' ? 'processing' : 'pending',
+      status: paymentMethod === 'card' || paymentMethod === 'paypal' ? 'paid' : 'pending',
     });
 
     // Clear cart after order
