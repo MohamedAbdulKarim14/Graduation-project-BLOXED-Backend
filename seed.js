@@ -15,12 +15,14 @@ const usersData = [
     email:    'admin@bloxed.tech',
     password: 'admin123',
     role:     'admin',
+    isVerified: true,
   },
   {
     name:     'Ahmed Mohamed',
     email:    'user@bloxed.tech',
     password: 'user1234',
     role:     'user',
+    isVerified: true,
   },
 ];
 
