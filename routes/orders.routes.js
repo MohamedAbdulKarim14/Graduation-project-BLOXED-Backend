@@ -187,5 +187,29 @@ router.post('/:id/return', verifyToken, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+// ─── POST /api/orders/:id/cancel (user) ───────────────────────────────────────
+router.post('/:id/cancel', verifyToken, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.userId.toString() !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
+    
+    const hoursSinceOrder = (new Date() - new Date(order.createdAt)) / (1000 * 60 * 60);
+    if (hoursSinceOrder > 24) {
+      return res.status(400).json({ message: 'Orders can only be cancelled within 24 hours' });
+    }
+
+    if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
+      return res.status(400).json({ message: 'This order cannot be cancelled anymore' });
+    }
+
+    order.status = 'cancelled';
+    await order.save();
+
+    res.json({ message: 'Order cancelled and refund requested successfully', order });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 module.exports = router;
