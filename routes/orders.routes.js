@@ -79,15 +79,17 @@ router.post('/', verifyToken, async (req, res) => {
       const num = cardDetails.number.replace(/\s/g, '');
       if (num.length !== 16) return res.status(400).json({ message: 'Invalid card number length' });
       
-      // Luhn check on server
-      const digits = num.split('').reverse().map(Number);
-      const sum = digits.reduce((acc, d, i) => {
-        if (i % 2 !== 0) { d *= 2; if (d > 9) d -= 9; }
-        return acc + d;
-      }, 0);
-      
-      if (sum % 10 !== 0) {
-        return res.status(400).json({ message: 'Card number is invalid (Luhn Check failed on Server)' });
+      // Luhn check on server (only if it's a new unmasked card)
+      if (!num.includes('*')) {
+        const digits = num.split('').reverse().map(Number);
+        const sum = digits.reduce((acc, d, i) => {
+          if (i % 2 !== 0) { d *= 2; if (d > 9) d -= 9; }
+          return acc + d;
+        }, 0);
+        
+        if (sum % 10 !== 0) {
+          return res.status(400).json({ message: 'Card number is invalid (Luhn Check failed on Server)' });
+        }
       }
 
       // Check expiry
