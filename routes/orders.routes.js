@@ -2,6 +2,7 @@ const router      = require('express').Router();
 const Order       = require('../models/Order.model');
 const Cart        = require('../models/Cart.model');
 const Notification= require('../models/Notification.model');
+const Coupon      = require('../models/Coupon.model');
 const verifyToken = require('../middleware/auth.middleware');
 const isAdmin     = require('../middleware/admin.middleware');
 
@@ -40,7 +41,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 // ─── POST /api/orders ─────────────────────────────────────────────────────────
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { items, shippingAddress, location, paymentMethod, cardDetails, paypalOrderId } = req.body;
+    const { items, shippingAddress, location, paymentMethod, cardDetails, paypalOrderId, couponCode, deliveryMethod } = req.body;
     if (!items || items.length === 0)
       return res.status(400).json({ message: 'Order must have at least one item' });
 
@@ -66,9 +67,27 @@ router.post('/', verifyToken, async (req, res) => {
     let settings = await Setting.findOne();
     if (!settings) settings = { shippingFee: 9.99, freeShippingThreshold: 100, taxRate: 0.14 };
 
-    const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
+    // Apply Coupon
+    let discountAmount = 0;
+    let appliedCoupon = null;
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+      if (coupon && coupon.isActive && (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date()) && (coupon.usageLimit === 0 || coupon.timesUsed < coupon.usageLimit)) {
+        if (coupon.discountType === 'fixed') {
+          discountAmount = coupon.discountValue;
+        } else {
+          discountAmount = subtotal * (coupon.discountValue / 100);
+        }
+        appliedCoupon = coupon.code;
+        // Increment usage
+        coupon.timesUsed += 1;
+        await coupon.save();
+      }
+    }
+
+    const shipping = deliveryMethod === 'pickup' ? 0 : (subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee);
     const tax = subtotal * settings.taxRate;
-    const calculatedTotal = subtotal + shipping + tax;
+    const calculatedTotal = Math.max(0, subtotal + shipping + tax - discountAmount);
 
     // 2. Validate Payment (Server-side)
     if (paymentMethod === 'card') {
@@ -121,6 +140,8 @@ router.post('/', verifyToken, async (req, res) => {
       subtotal,
       shippingFee: shipping,
       taxAmount: tax,
+      discountAmount,
+      couponCode: appliedCoupon,
       totalAmount: calculatedTotal,
       paymentMethod: paymentMethod,
       paypalOrderId: paymentMethod === 'paypal' ? paypalOrderId : undefined,

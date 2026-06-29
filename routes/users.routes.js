@@ -47,7 +47,7 @@ router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── GET /api/users/stats (admin) ────────────────────────────────────────────
+// ─── GET /api/users/stats/summary (admin) ────────────────────────────────────────────
 router.get('/stats/summary', verifyToken, isAdmin, async (req, res) => {
   try {
     const totalUsers  = await User.countDocuments({ role: 'user' });
@@ -58,6 +58,40 @@ router.get('/stats/summary', verifyToken, isAdmin, async (req, res) => {
     ]);
     const totalRevenue = revenueAgg[0]?.total || 0;
     res.json({ totalUsers, totalOrders, totalRevenue });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── GET /api/users/stats/charts (admin) ────────────────────────────────────────────
+router.get('/stats/charts', verifyToken, isAdmin, async (req, res) => {
+  try {
+    // 1. Sales over last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const salesByDay = await Order.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo }, status: { $ne: 'cancelled' } } },
+      { 
+        $group: { 
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          totalSales: { $sum: '$totalAmount' }
+        } 
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 2. Orders by status
+    const ordersByStatus = await Order.aggregate([
+      { 
+        $group: { 
+          _id: '$status',
+          count: { $sum: 1 }
+        } 
+      }
+    ]);
+
+    res.json({ salesByDay, ordersByStatus });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

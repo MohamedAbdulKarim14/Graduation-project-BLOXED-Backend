@@ -25,6 +25,8 @@ app.use('/api/chat',       require('./routes/chat.routes'));
 app.use('/api/users',      require('./routes/users.routes'));
 app.use('/api/notifications', require('./routes/notifications.routes'));
 app.use('/api/settings',      require('./routes/settings.routes'));
+app.use('/api/coupons',       require('./routes/coupons.routes'));
+app.use('/api/wishlists',     require('./routes/wishlist.routes'));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({ message: 'Categoriestore API is running' }));

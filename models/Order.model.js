@@ -7,10 +7,11 @@ const OrderItemSchema = new mongoose.Schema(
       ref: 'Product',
       required: true,
     },
+    variantName: { type: String },
     quantity: { type: Number, required: true, min: 1 },
     priceAtPurchase: { type: Number, required: true },
   },
-  { _id: false },
+  { _id: true },
 );
 
 const OrderSchema = new mongoose.Schema(
@@ -24,6 +25,8 @@ const OrderSchema = new mongoose.Schema(
     subtotal: { type: Number, default: 0 },
     shippingFee: { type: Number, default: 0 },
     taxAmount: { type: Number, default: 0 },
+    discountAmount: { type: Number, default: 0 },
+    couponCode: { type: String },
     totalAmount: { type: Number, required: true },
     status: {
       type: String,
