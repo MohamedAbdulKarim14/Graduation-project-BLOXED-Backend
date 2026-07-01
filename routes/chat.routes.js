@@ -64,8 +64,8 @@ router.post('/build-kit', async (req, res) => {
     const products = await Product.find().select('_id name price description');
     
     const storeContext = `
-أنت خبير تجميعات تقنية (Tech Setup Builder). 
-طلب المستخدم: "${prompt}"
+أنت خبير تجميعات تقنية (Tech Setup Builder) في متجر BLOXED.
+المستخدم يسألك بشكل طبيعي وعفوي: "${prompt}"
 
 إليك المنتجات المتوفرة في متجرنا:
 ${JSON.stringify(products.map(p => ({
@@ -74,32 +74,39 @@ ${JSON.stringify(products.map(p => ({
   desc: p.description
 })))}
 
-مهمتك هي اختيار من 1 إلى 4 منتجات كحد أقصى تتناسب تماماً مع طلب المستخدم (مثلاً تجميعة كمبيوتر متوافقة، أو حزمة ملحقات، الخ).
-يجب أن ترجع إجابتك حصراً بصيغة مصفوفة JSON تحتوي على معرفات المنتجات (IDs) فقط.
+مهمتك هي الرد على المستخدم بشكل طبيعي، ودود، وخبير، وتوضيح سبب اختيارك للمنتجات التي ستقترحها، واختيار من 1 إلى 4 منتجات كحد أقصى تتناسب مع طلبه.
+يجب أن ترجع إجابتك حصراً بصيغة JSON Object يحتوي على مفتاحين:
+1. "explanation": النص الذي سترد به على المستخدم (باللغة العربية).
+2. "productIds": مصفوفة تحتوي على معرفات المنتجات (IDs) التي رشحتها.
+
 مثال للإجابة الصحيحة:
-["64a1b2c3d4e5f60012345678", "64a1b2c3d4e5f60012345679"]
-لا تضف أي نص آخر، لا تضف أي علامات (Markdown)، فقط المصفوفة.
+{
+  "explanation": "بناءً على طلبك لجهاز ألعاب قوي ومناسب للبث المباشر، أنصحك بهذا الجهاز لأنه يوفر أداء ممتاز لمعالجة الرسوميات...",
+  "productIds": ["64a1b2c3d4e5f60012345678", "64a1b2c3d4e5f60012345679"]
+}
+
+لا تضف أي نص خارج كود الـ JSON. تأكد من صحة بناء الـ JSON.
 `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(storeContext);
     const text = result.response.text().replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
     
-    let recommendedIds = [];
+    let parsed = { explanation: '', productIds: [] };
     try {
-      recommendedIds = JSON.parse(text);
+      parsed = JSON.parse(text);
     } catch (e) {
       console.error('Failed to parse JSON from AI:', text);
       return res.status(500).json({ message: 'Error parsing AI response' });
     }
 
-    if (!Array.isArray(recommendedIds)) {
-      recommendedIds = [];
+    if (!Array.isArray(parsed.productIds)) {
+      parsed.productIds = [];
     }
 
-    const recommendedProducts = await Product.find({ _id: { $in: recommendedIds } });
+    const recommendedProducts = await Product.find({ _id: { $in: parsed.productIds } });
     
-    res.json({ products: recommendedProducts });
+    res.json({ products: recommendedProducts, explanation: parsed.explanation });
   } catch (err) {
     console.error('AI Kit Builder Error:', err);
     res.status(500).json({ message: 'Error generating kit setup.' });
