@@ -5,6 +5,9 @@ const User     = require('../models/User.model');
 const Cart     = require('../models/Cart.model');
 const Notification = require('../models/Notification.model');
 const sendEmail = require('../utils/sendEmail');
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -133,6 +136,61 @@ router.post('/login', async (req, res) => {
     res.status(200).json({ accessToken });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── POST /api/auth/google ────────────────────────────────────────────────────
+router.post('/google', async (req, res) => {
+  try {
+    const { credential } = req.body; // Actually this will be the access_token now
+    if (!credential) return res.status(400).json({ message: 'Google credential is required' });
+
+    // Fetch user info from Google using the access token
+    const googleResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${credential}` }
+    });
+    const data = await googleResponse.json();
+    const { email, name } = data;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user with a random secure password
+      const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const hashed = await bcrypt.hash(randomPassword, 10);
+      
+      user = await User.create({ 
+        name, 
+        email, 
+        password: hashed, 
+        role: 'user',
+        isVerified: true 
+      });
+
+      // Create empty cart for new user
+      await Cart.create({ userId: user._id, items: [] });
+
+      // Notify Admin
+      await Notification.create({
+        userId: null,
+        title: 'New User Registered (Google)',
+        message: `${user.name} (${user.email}) just joined the store via Google.`,
+        type: 'info',
+        link: '/admin/users'
+      });
+    } else {
+      // If user exists but is not verified, verify them since Google authenticated them
+      if (!user.isVerified) {
+        user.isVerified = true;
+        await user.save();
+      }
+    }
+
+    const accessToken = signToken(user);
+    res.status(200).json({ accessToken });
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    res.status(500).json({ message: 'Error authenticating with Google' });
   }
 });
 

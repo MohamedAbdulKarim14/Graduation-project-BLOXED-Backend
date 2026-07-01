@@ -34,6 +34,11 @@ const OrderSchema = new mongoose.Schema(
       default: 'pending',
     },
     shippingAddress: { type: String, required: true },
+    shippingMethod: {
+      type: String,
+      enum: ['standard', 'express', 'sameday', 'pickup'],
+      default: 'standard'
+    },
     location: {
       lat: { type: Number },
       lng: { type: Number }
@@ -41,6 +46,7 @@ const OrderSchema = new mongoose.Schema(
     paypalOrderId: { type: String },
     returnStatus: { type: String, enum: ['none', 'requested', 'approved', 'rejected'], default: 'none' },
     returnReason: { type: String },
+    cancelledBy: { type: String, enum: ['user', 'admin'] },
     orderDate: { type: Date, default: Date.now },
   },
   { timestamps: true },

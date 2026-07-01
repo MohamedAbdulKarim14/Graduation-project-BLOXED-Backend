@@ -4,6 +4,8 @@ const settingSchema = new mongoose.Schema(
   {
     storeName: { type: String, default: 'TechShop' },
     shippingFee: { type: Number, default: 9.99 },
+    expressShippingFee: { type: Number, default: 10 },
+    samedayShippingFee: { type: Number, default: 20 },
     freeShippingThreshold: { type: Number, default: 100 },
     taxRate: { type: Number, default: 0.14 },
     currency: { type: String, default: 'USD' }

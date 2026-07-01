@@ -41,7 +41,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 // ─── POST /api/orders ─────────────────────────────────────────────────────────
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { items, shippingAddress, location, paymentMethod, cardDetails, paypalOrderId, couponCode, deliveryMethod } = req.body;
+    const { items, shippingAddress, location, paymentMethod, cardDetails, paypalOrderId, couponCode, shippingMethod } = req.body;
     if (!items || items.length === 0)
       return res.status(400).json({ message: 'Order must have at least one item' });
 
@@ -65,7 +65,7 @@ router.post('/', verifyToken, async (req, res) => {
     // Fetch Settings
     const Setting = require('../models/Setting.model');
     let settings = await Setting.findOne();
-    if (!settings) settings = { shippingFee: 9.99, freeShippingThreshold: 100, taxRate: 0.14 };
+    if (!settings) settings = { shippingFee: 9.99, expressShippingFee: 10, samedayShippingFee: 20, freeShippingThreshold: 100, taxRate: 0.14 };
 
     // Apply Coupon
     let discountAmount = 0;
@@ -85,7 +85,17 @@ router.post('/', verifyToken, async (req, res) => {
       }
     }
 
-    const shipping = deliveryMethod === 'pickup' ? 0 : (subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee);
+    let shipping = 0;
+    if (shippingMethod === 'standard') {
+      shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
+    } else if (shippingMethod === 'express') {
+      shipping = settings.shippingFee + (settings.expressShippingFee || 10);
+    } else if (shippingMethod === 'sameday') {
+      shipping = settings.shippingFee + (settings.samedayShippingFee || 20);
+    } else if (shippingMethod === 'pickup') {
+      shipping = 0;
+    }
+    
     const tax = subtotal * settings.taxRate;
     const calculatedTotal = Math.max(0, subtotal + shipping + tax - discountAmount);
 
@@ -136,6 +146,7 @@ router.post('/', verifyToken, async (req, res) => {
       userId: req.user.id,
       items: finalItems,
       shippingAddress,
+      shippingMethod: shippingMethod || 'standard',
       location,
       subtotal,
       shippingFee: shipping,
@@ -170,9 +181,12 @@ router.post('/', verifyToken, async (req, res) => {
 router.patch('/:id/status', verifyToken, isAdmin, async (req, res) => {
   try {
     const { status } = req.body;
+    let updateFields = { status };
+    if (status === 'cancelled') updateFields.cancelledBy = 'admin';
+
     const order = await Order.findByIdAndUpdate(
       req.params.id,
-      { status },
+      updateFields,
       { new: true }
     ).populate('userId', 'name');
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -213,6 +227,36 @@ router.post('/:id/return', verifyToken, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// ─── PATCH /api/orders/:id/return-status (admin) ──────────────────────────────
+router.patch('/:id/return-status', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { returnStatus } = req.body;
+    if (!['approved', 'rejected', 'none'].includes(returnStatus)) {
+      return res.status(400).json({ message: 'Invalid return status' });
+    }
+
+    const order = await Order.findById(req.params.id).populate('userId', 'name');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    order.returnStatus = returnStatus;
+    await order.save();
+
+    // Notify User
+    await Notification.create({
+      userId: order.userId._id,
+      title: 'Return Request Updated',
+      message: `Your return request for order #${order._id.toString().slice(-6).toUpperCase()} was ${returnStatus}.`,
+      type: returnStatus === 'approved' ? 'success' : 'warning',
+      link: '/orders'
+    });
+
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ─── POST /api/orders/:id/cancel (user) ───────────────────────────────────────
 router.post('/:id/cancel', verifyToken, async (req, res) => {
   try {
@@ -230,6 +274,7 @@ router.post('/:id/cancel', verifyToken, async (req, res) => {
     }
 
     order.status = 'cancelled';
+    order.cancelledBy = 'user';
     await order.save();
 
     res.json({ message: 'Order cancelled and refund requested successfully', order });
