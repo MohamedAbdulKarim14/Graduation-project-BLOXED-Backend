@@ -2,7 +2,7 @@ const router = require('express').Router();
 const Wishlist = require('../models/Wishlist.model');
 const verifyToken = require('../middleware/auth.middleware');
 
-// GET /api/wishlists/my
+
 router.get('/my', verifyToken, async (req, res) => {
   try {
     let wishlist = await Wishlist.findOne({ userId: req.user.id }).populate('groups.items');
@@ -18,8 +18,8 @@ router.get('/my', verifyToken, async (req, res) => {
   }
 });
 
-// PUT /api/wishlists/my
-// Expects { groups: [...] }
+
+
 router.put('/my', verifyToken, async (req, res) => {
   try {
     const { groups } = req.body;
@@ -28,7 +28,7 @@ router.put('/my', verifyToken, async (req, res) => {
       wishlist = new Wishlist({ userId: req.user.id });
     }
     
-    // Map items to only their ObjectIds to save in DB
+    
     const processedGroups = groups.map(g => ({
       name: g.name,
       _id: g._id || g.id,

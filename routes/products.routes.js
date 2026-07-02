@@ -4,12 +4,12 @@ const Category        = require('../models/Category.model');
 const verifyToken = require('../middleware/auth.middleware');
 const isAdmin     = require('../middleware/admin.middleware');
 
-// ─── GET /api/products ────────────────────────────────────────────────────────
+
 router.get('/', async (req, res) => {
   try {
     const { categoryId, minPrice, maxPrice, sortBy, search, ids, page = 1, limit = 9 } = req.query;
     
-    // Build Filter
+    
     const filter = {};
     if (categoryId) filter.categoryIds = categoryId;
     if (search) filter.name = { $regex: search, $options: 'i' };
@@ -21,12 +21,12 @@ router.get('/', async (req, res) => {
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    // Build Sort
-    let sortOptions = { createdAt: -1 }; // newest by default
+    
+    let sortOptions = { createdAt: -1 }; 
     if (sortBy === 'price_asc')  sortOptions = { price: 1 };
     if (sortBy === 'price_desc') sortOptions = { price: -1 };
 
-    // Pagination
+    
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ─── GET /api/products/:id ────────────────────────────────────────────────────
+
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('categoryIds', 'name');
@@ -60,7 +60,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ─── POST /api/products (admin) ───────────────────────────────────────────────
+
 router.post('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const product = await Product.create(req.body);
@@ -70,7 +70,7 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── PUT /api/products/:id (admin) ───────────────────────────────────────────
+
 router.put('/:id', verifyToken, isAdmin, async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -81,7 +81,7 @@ router.put('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── DELETE /api/products/:id (admin) ────────────────────────────────────────
+
 router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);

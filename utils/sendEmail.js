@@ -2,10 +2,12 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('⚠️ EMAIL_USER or EMAIL_PASS not set in .env. Skipping email and printing OTP to console.');
+    console.warn(
+      'EMAIL_USER or EMAIL_PASS not set in .env. Skipping email and printing OTP to console.',
+    );
     console.log(`\n========================================`);
-    console.log(`📧 To: ${options.email}`);
-    console.log(`🔑 OTP Code: ${options.otp}`);
+    console.log(`To: ${options.email}`);
+    console.log(` OTP Code: ${options.otp}`);
     console.log(`========================================\n`);
     return;
   }

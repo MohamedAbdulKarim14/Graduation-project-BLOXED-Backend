@@ -2,13 +2,13 @@ const router = require('express').Router();
 const Notification = require('../models/Notification.model');
 const verifyToken = require('../middleware/auth.middleware');
 
-// GET /api/notifications
-// Admin gets admin notifications (userId: null)
-// User gets their own notifications (userId: req.user.id)
+
+
+
 router.get('/', verifyToken, async (req, res) => {
   try {
     const filter = req.user.role === 'admin' 
-      ? { userId: null } // admin-wide notifications
+      ? { userId: null } 
       : { userId: req.user.id };
 
     const notifications = await Notification.find(filter).sort({ createdAt: -1 }).limit(50);
@@ -18,13 +18,13 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// PATCH /api/notifications/:id/read
+
 router.patch('/:id/read', verifyToken, async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
     if (!notification) return res.status(404).json({ message: 'Not found' });
 
-    // Validate ownership
+    
     if (req.user.role !== 'admin' && String(notification.userId) !== req.user.id) {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -37,7 +37,7 @@ router.patch('/:id/read', verifyToken, async (req, res) => {
   }
 });
 
-// PATCH /api/notifications/read-all
+
 router.patch('/read-all', verifyToken, async (req, res) => {
   try {
     const filter = req.user.role === 'admin' 

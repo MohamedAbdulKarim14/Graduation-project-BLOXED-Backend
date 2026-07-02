@@ -4,9 +4,9 @@ const Coupon = require('../models/Coupon.model');
 const verifyToken = require('../middleware/auth.middleware');
 const isAdmin = require('../middleware/admin.middleware');
 
-// @route   POST /api/coupons/validate
-// @desc    Validate a coupon code
-// @access  Public (or Private if you only allow logged in users)
+
+
+
 router.post('/validate', async (req, res) => {
   try {
     const { code } = req.body;
@@ -31,9 +31,9 @@ router.post('/validate', async (req, res) => {
   }
 });
 
-// @route   GET /api/coupons
-// @desc    Get all coupons
-// @access  Private/Admin
+
+
+
 router.get('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const coupons = await Coupon.find().sort('-createdAt');
@@ -43,9 +43,9 @@ router.get('/', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// @route   POST /api/coupons
-// @desc    Create a coupon
-// @access  Private/Admin
+
+
+
 router.post('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const { code, discountType, discountValue, isActive, expiresAt, usageLimit } = req.body;
@@ -68,9 +68,9 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// @route   DELETE /api/coupons/:id
-// @desc    Delete a coupon
-// @access  Private/Admin
+
+
+
 router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
   try {
     const coupon = await Coupon.findById(req.params.id);

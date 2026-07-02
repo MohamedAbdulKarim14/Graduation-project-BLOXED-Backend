@@ -3,13 +3,13 @@ const Setting = require('../models/Setting.model');
 const verifyToken = require('../middleware/auth.middleware');
 const isAdmin = require('../middleware/admin.middleware');
 
-// GET /api/settings
-// Publicly accessible to fetch global store settings
+
+
 router.get('/', async (req, res) => {
   try {
     let settings = await Setting.findOne();
     if (!settings) {
-      // Create defaults if not exists
+      
       settings = await Setting.create({});
     }
     res.json(settings);
@@ -18,8 +18,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PUT /api/settings
-// Admin only updates the global settings
+
+
 router.put('/', verifyToken, isAdmin, async (req, res) => {
   try {
     let settings = await Setting.findOne();

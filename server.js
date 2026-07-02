@@ -8,16 +8,16 @@ dotenv.config();
 
 const app = express();
 
-// ─── Middleware ────────────────────────────────────────────────────────────────
+
 app.use(cors({ origin: '*' }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));  // serve images
+app.use(express.static(path.join(__dirname, 'public')));  
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+
 app.use('/api/auth',       require('./routes/auth.routes'));
 app.use('/api/products',   require('./routes/products.routes'));
 app.use('/api/categories', require('./routes/Categories.routes'));
-app.use('/api/Categories', require('./routes/Categories.routes'));  // backwards compat
+app.use('/api/Categories', require('./routes/Categories.routes'));  
 app.use('/api/carts',      require('./routes/cart.routes'));
 app.use('/api/orders',     require('./routes/orders.routes'));
 app.use('/api/reviews',    require('./routes/reviews.routes'));
@@ -27,11 +27,12 @@ app.use('/api/notifications', require('./routes/notifications.routes'));
 app.use('/api/settings',      require('./routes/settings.routes'));
 app.use('/api/coupons',       require('./routes/coupons.routes'));
 app.use('/api/wishlists',     require('./routes/wishlist.routes'));
+app.use('/api/upload',        require('./routes/upload.routes'));
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
+
 app.get('/', (req, res) => res.json({ message: 'Categoriestore API is running' }));
 
-// ─── MongoDB Connection ───────────────────────────────────────────────────────
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {

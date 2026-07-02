@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // if null, it's an admin notification
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, 
     title: { type: String, required: true },
     message: { type: String, required: true },
     type: { type: String, enum: ['info', 'success', 'warning', 'error'], default: 'info' },
     isRead: { type: Boolean, default: false },
-    link: { type: String, required: false } // optional link to redirect when clicked
+    link: { type: String, required: false } 
   },
   { timestamps: true }
 );

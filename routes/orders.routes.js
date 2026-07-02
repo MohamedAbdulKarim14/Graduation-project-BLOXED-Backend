@@ -6,7 +6,7 @@ const Coupon      = require('../models/Coupon.model');
 const verifyToken = require('../middleware/auth.middleware');
 const isAdmin     = require('../middleware/admin.middleware');
 
-// ─── GET /api/orders (admin: all | user: own) ─────────────────────────────────
+
 router.get('/', verifyToken, async (req, res) => {
   try {
     const filter = req.user.role === 'admin' ? {} : { userId: req.user.id };
@@ -20,7 +20,7 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// ─── GET /api/orders/:id ──────────────────────────────────────────────────────
+
 router.get('/:id', verifyToken, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
@@ -28,7 +28,7 @@ router.get('/:id', verifyToken, async (req, res) => {
       .populate('items.productId', 'name imageUrl price');
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    // Only owner or admin
+    
     if (req.user.role !== 'admin' && order.userId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -38,14 +38,14 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// ─── POST /api/orders ─────────────────────────────────────────────────────────
+
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { items, shippingAddress, location, paymentMethod, cardDetails, paypalOrderId, couponCode, shippingMethod } = req.body;
     if (!items || items.length === 0)
       return res.status(400).json({ message: 'Order must have at least one item' });
 
-    // 1. Recalculate total from database to prevent frontend tampering
+    
     const Product = require('../models/Product.model');
     let subtotal = 0;
     const finalItems = [];
@@ -62,12 +62,12 @@ router.post('/', verifyToken, async (req, res) => {
       });
     }
 
-    // Fetch Settings
+    
     const Setting = require('../models/Setting.model');
     let settings = await Setting.findOne();
     if (!settings) settings = { shippingFee: 9.99, expressShippingFee: 10, samedayShippingFee: 20, freeShippingThreshold: 100, taxRate: 0.14 };
 
-    // Apply Coupon
+    
     let discountAmount = 0;
     let appliedCoupon = null;
     if (couponCode) {
@@ -79,7 +79,7 @@ router.post('/', verifyToken, async (req, res) => {
           discountAmount = subtotal * (coupon.discountValue / 100);
         }
         appliedCoupon = coupon.code;
-        // Increment usage
+        
         coupon.timesUsed += 1;
         await coupon.save();
       }
@@ -99,7 +99,7 @@ router.post('/', verifyToken, async (req, res) => {
     const tax = subtotal * settings.taxRate;
     const calculatedTotal = Math.max(0, subtotal + shipping + tax - discountAmount);
 
-    // 2. Validate Payment (Server-side)
+    
     if (paymentMethod === 'card') {
       if (!cardDetails || !cardDetails.number || !cardDetails.expiry || !cardDetails.cvc) {
         return res.status(400).json({ message: 'Missing card details' });
@@ -108,7 +108,7 @@ router.post('/', verifyToken, async (req, res) => {
       const num = cardDetails.number.replace(/\s/g, '');
       if (num.length !== 16) return res.status(400).json({ message: 'Invalid card number length' });
       
-      // Luhn check on server (only if it's a new unmasked card)
+      
       if (!num.includes('*')) {
         const digits = num.split('').reverse().map(Number);
         const sum = digits.reduce((acc, d, i) => {
@@ -132,16 +132,16 @@ router.post('/', verifyToken, async (req, res) => {
         return res.status(400).json({ message: 'Card has expired or invalid month' });
       }
 
-      // Simulate API call to Payment Gateway (Stripe/PayPal)
-      // await fakePaymentGatewayCharge(calculatedTotal, cardDetails);
+      
+      
     } else if (paymentMethod === 'paypal') {
       if (!paypalOrderId) {
         return res.status(400).json({ message: 'Missing PayPal Order ID' });
       }
-      // Ideally, verify paypalOrderId with PayPal API here
+      
     }
 
-    // 3. Create Order
+    
     const order = await Order.create({
       userId: req.user.id,
       items: finalItems,
@@ -159,10 +159,10 @@ router.post('/', verifyToken, async (req, res) => {
       status: paymentMethod === 'card' || paymentMethod === 'paypal' ? 'paid' : 'pending',
     });
 
-    // Clear cart after order
+    
     await Cart.findOneAndUpdate({ userId: req.user.id }, { items: [] });
 
-    // Notify Admins
+    
     await Notification.create({
       userId: null,
       title: 'New Order Received',
@@ -177,7 +177,7 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// ─── PATCH /api/orders/:id/status (admin) ────────────────────────────────────
+
 router.patch('/:id/status', verifyToken, isAdmin, async (req, res) => {
   try {
     const { status } = req.body;
@@ -191,13 +191,13 @@ router.patch('/:id/status', verifyToken, isAdmin, async (req, res) => {
     ).populate('userId', 'name');
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    // Notify User
+    
     await Notification.create({
       userId: order.userId._id,
       title: 'Order Status Updated',
       message: `Your order #${order._id.toString().slice(-6).toUpperCase()} is now ${status}.`,
       type: 'info',
-      link: '/profile' // Assuming user can see orders in profile
+      link: '/profile' 
     });
 
     res.json(order);
@@ -206,7 +206,7 @@ router.patch('/:id/status', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── POST /api/orders/:id/return (user) ───────────────────────────────────────
+
 router.post('/:id/return', verifyToken, async (req, res) => {
   try {
     const { reason } = req.body;
@@ -228,7 +228,7 @@ router.post('/:id/return', verifyToken, async (req, res) => {
   }
 });
 
-// ─── PATCH /api/orders/:id/return-status (admin) ──────────────────────────────
+
 router.patch('/:id/return-status', verifyToken, isAdmin, async (req, res) => {
   try {
     const { returnStatus } = req.body;
@@ -242,7 +242,7 @@ router.patch('/:id/return-status', verifyToken, isAdmin, async (req, res) => {
     order.returnStatus = returnStatus;
     await order.save();
 
-    // Notify User
+    
     await Notification.create({
       userId: order.userId._id,
       title: 'Return Request Updated',
@@ -257,7 +257,7 @@ router.patch('/:id/return-status', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── POST /api/orders/:id/cancel (user) ───────────────────────────────────────
+
 router.post('/:id/cancel', verifyToken, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);

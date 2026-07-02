@@ -3,7 +3,7 @@ const Cart        = require('../models/Cart.model');
 const Product     = require('../models/Product.model');
 const verifyToken = require('../middleware/auth.middleware');
 
-// ─── GET /api/carts/my ────────────────────────────────────────────────────────
+
 router.get('/my', verifyToken, async (req, res) => {
   try {
     let cart = await Cart.findOne({ userId: req.user.id }).populate('items.productId');
@@ -16,7 +16,7 @@ router.get('/my', verifyToken, async (req, res) => {
   }
 });
 
-// ─── POST /api/carts/add ──────────────────────────────────────────────────────
+
 router.post('/add', verifyToken, async (req, res) => {
   try {
     const { productId, quantity, variantName } = req.body;
@@ -49,7 +49,7 @@ router.post('/add', verifyToken, async (req, res) => {
   }
 });
 
-// ─── PATCH /api/carts/item/:itemId ────────────────────────────────────────
+
 router.patch('/item/:itemId', verifyToken, async (req, res) => {
   try {
     const { quantity } = req.body;
@@ -73,7 +73,7 @@ router.patch('/item/:itemId', verifyToken, async (req, res) => {
   }
 });
 
-// ─── DELETE /api/carts/item/:itemId ────────────────────────────────────────
+
 router.delete('/item/:itemId', verifyToken, async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.user.id });
@@ -88,7 +88,7 @@ router.delete('/item/:itemId', verifyToken, async (req, res) => {
   }
 });
 
-// ─── DELETE /api/carts/clear ─────────────────────────────────────────────────
+
 router.delete('/clear', verifyToken, async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.user.id });

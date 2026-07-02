@@ -41,7 +41,7 @@ router.get('/:productId/summary', async (req, res) => {
   }
 });
 
-// GET /api/reviews/:productId  — public
+
 router.get('/:productId', async (req, res) => {
   try {
     const reviews = await Review.find({ productId: req.params.productId })
@@ -58,7 +58,7 @@ router.get('/:productId', async (req, res) => {
   }
 });
 
-// POST /api/reviews/:productId  — auth required
+
 router.post('/:productId', verifyToken, async (req, res) => {
   try {
     const { rating, title, body } = req.body;
@@ -77,7 +77,7 @@ router.post('/:productId', verifyToken, async (req, res) => {
   }
 });
 
-// DELETE /api/reviews/:id  — owner only
+
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);

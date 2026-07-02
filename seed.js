@@ -8,7 +8,7 @@ require('dotenv').config();
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ecommere';
 
-// ── Users ──────────────────────────────────────────────────────────────────
+
 const usersData = [
   {
     name:     'Admin User',
@@ -26,7 +26,7 @@ const usersData = [
   },
 ];
 
-// ── Categories ─────────────────────────────────────────────────────────────
+
 const categoriesData = [
   { name: 'Laptops & PCs', description: 'High-performance laptops, desktops and accessories', imageUrl: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&q=80' },
   { name: 'Smartphones', description: 'Latest flagship and mid-range mobile devices', imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=80' },
@@ -40,13 +40,12 @@ const categoriesData = [
   { name: 'Storage & Drives', description: 'Fast SSDs and reliable hard drives', imageUrl: 'https://images.unsplash.com/photo-1597848212624-a19eb35e2651?w=800&q=80' }
 ];
 
-// ── Run ────────────────────────────────────────────────────────────────────
+
 async function seed() {
   await mongoose.connect(MONGO_URI);
   console.log('✅ Connected to MongoDB');
 
-  /* Users */
-  await User.deleteMany({});
+    await User.deleteMany({});
   const hashed = await Promise.all(
     usersData.map(async u => ({
       ...u,
@@ -56,13 +55,11 @@ async function seed() {
   await User.insertMany(hashed);
   console.log('✅ Users seeded');
 
-  /* Categories */
-  await Category.deleteMany({});
+    await Category.deleteMany({});
   const cats = await Category.insertMany(categoriesData);
   console.log(`✅ ${cats.length} categories seeded`);
 
-  /* Dynamic Products Generation (10 per category = 100 products) */
-  await Product.deleteMany({});
+    await Product.deleteMany({});
   const prods = [];
   
   cats.forEach((cat, index) => {
@@ -70,9 +67,9 @@ async function seed() {
       prods.push({
         name: `Pro ${cat.name} Model X${i}`,
         description: `High-quality ${cat.name.toLowerCase()} featuring advanced technology and premium materials. Ideal for all your needs.`,
-        price: Math.floor(Math.random() * 900) + 99, // Random price $99 - $999
-        stock: Math.floor(Math.random() * 50) + 5,   // Random stock 5 - 55
-        imageUrl: cat.imageUrl, // Fallback to category image
+        price: Math.floor(Math.random() * 900) + 99, 
+        stock: Math.floor(Math.random() * 50) + 5,   
+        imageUrl: cat.imageUrl, 
         categoryIds: [cat._id]
       });
     }

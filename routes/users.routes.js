@@ -4,7 +4,7 @@ const Order       = require('../models/Order.model');
 const verifyToken = require('../middleware/auth.middleware');
 const isAdmin     = require('../middleware/admin.middleware');
 
-// ─── GET /api/users (admin) ───────────────────────────────────────────────────
+
 router.get('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const users = await User.find().select('-password').sort({ createdAt: -1 });
@@ -14,7 +14,7 @@ router.get('/', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── GET /api/users/me ────────────────────────────────────────────────────────
+
 router.get('/me', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
@@ -25,10 +25,10 @@ router.get('/me', verifyToken, async (req, res) => {
   }
 });
 
-// ─── PATCH /api/users/:id (admin) ────────────────────────────────────────────
+
 router.patch('/:id', verifyToken, isAdmin, async (req, res) => {
   try {
-    const { password, ...data } = req.body; // Don't update password here
+    const { password, ...data } = req.body; 
     const user = await User.findByIdAndUpdate(req.params.id, data, { new: true }).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
@@ -37,7 +37,7 @@ router.patch('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── DELETE /api/users/:id (admin) ───────────────────────────────────────────
+
 router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
@@ -47,7 +47,7 @@ router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── GET /api/users/stats/summary (admin) ────────────────────────────────────────────
+
 router.get('/stats/summary', verifyToken, isAdmin, async (req, res) => {
   try {
     const totalUsers  = await User.countDocuments({ role: 'user' });
@@ -63,10 +63,10 @@ router.get('/stats/summary', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── GET /api/users/stats/charts (admin) ────────────────────────────────────────────
+
 router.get('/stats/charts', verifyToken, isAdmin, async (req, res) => {
   try {
-    // 1. Sales over last 7 days
+    
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
@@ -81,7 +81,7 @@ router.get('/stats/charts', verifyToken, isAdmin, async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
 
-    // 2. Orders by status
+    
     const ordersByStatus = await Order.aggregate([
       { 
         $group: { 
@@ -97,13 +97,13 @@ router.get('/stats/charts', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── POST /api/users/addresses ──────────────────────────────────────────────────
+
 router.post('/addresses', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
-    // If this is the first address, make it default automatically
+    
     const isDefault = req.body.isDefault || user.addresses.length === 0;
     
     if (isDefault) {
@@ -119,7 +119,7 @@ router.post('/addresses', verifyToken, async (req, res) => {
   }
 });
 
-// ─── DELETE /api/users/addresses/:addressId ────────────────────────────────────
+
 router.delete('/addresses/:addressId', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -127,7 +127,7 @@ router.delete('/addresses/:addressId', verifyToken, async (req, res) => {
 
     user.addresses = user.addresses.filter(a => a._id.toString() !== req.params.addressId);
     
-    // If we deleted the default address, make the first one default if exists
+    
     if (user.addresses.length > 0 && !user.addresses.some(a => a.isDefault)) {
       user.addresses[0].isDefault = true;
     }
@@ -139,7 +139,7 @@ router.delete('/addresses/:addressId', verifyToken, async (req, res) => {
   }
 });
 
-// ─── PUT /api/users/addresses/:addressId/default ──────────────────────────────
+
 router.put('/addresses/:addressId/default', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -156,13 +156,13 @@ router.put('/addresses/:addressId/default', verifyToken, async (req, res) => {
   }
 });
 
-// ─── POST /api/users/cards ──────────────────────────────────────────────────
+
 router.post('/cards', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
-    // Push new card
+    
     user.savedCards.push(req.body);
     await user.save();
     
@@ -172,7 +172,7 @@ router.post('/cards', verifyToken, async (req, res) => {
   }
 });
 
-// ─── DELETE /api/users/cards/:cardId ────────────────────────────────────
+
 router.delete('/cards/:cardId', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

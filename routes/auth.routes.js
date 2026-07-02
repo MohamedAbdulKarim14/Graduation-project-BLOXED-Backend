@@ -18,7 +18,7 @@ const signToken = (user) =>
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 
-// ─── POST /api/auth/register ──────────────────────────────────────────────────
+
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -30,14 +30,14 @@ router.post('/register', async (req, res) => {
       if (exists.isVerified) {
         return res.status(400).json({ message: 'Email already registered' });
       } else {
-        // User exists but not verified. Update info, regenerate OTP, and resend.
+        
         const hashed = await bcrypt.hash(password, 10);
         exists.name = name;
         exists.password = hashed;
         
         const otp = generateOTP();
         exists.otp = otp;
-        exists.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+        exists.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
         await exists.save();
 
         await sendEmail({
@@ -56,12 +56,12 @@ router.post('/register', async (req, res) => {
     const hashed  = await bcrypt.hash(password, 10);
     const newUser = await User.create({ name, email, password: hashed, role: 'user' });
 
-    // Create empty cart for new user
+    
     await Cart.create({ userId: newUser._id, items: [] });
 
-    // Notify Admin
+    
     await Notification.create({
-      userId: null, // Admin
+      userId: null, 
       title: 'New User Registered',
       message: `${newUser.name} (${newUser.email}) just joined the store.`,
       type: 'info',
@@ -70,7 +70,7 @@ router.post('/register', async (req, res) => {
 
     const otp = generateOTP();
     newUser.otp = otp;
-    newUser.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+    newUser.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
     await newUser.save();
 
     await sendEmail({
@@ -88,7 +88,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/verify-otp ────────────────────────────────────────────────
+
 router.post('/verify-otp', async (req, res) => {
   try {
     const { userId, otp } = req.body;
@@ -115,7 +115,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/login ─────────────────────────────────────────────────────
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -139,13 +139,13 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/google ────────────────────────────────────────────────────
+
 router.post('/google', async (req, res) => {
   try {
-    const { credential } = req.body; // Actually this will be the access_token now
+    const { credential } = req.body; 
     if (!credential) return res.status(400).json({ message: 'Google credential is required' });
 
-    // Fetch user info from Google using the access token
+    
     const googleResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${credential}` }
     });
@@ -155,7 +155,7 @@ router.post('/google', async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      // Create new user with a random secure password
+      
       const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
       const hashed = await bcrypt.hash(randomPassword, 10);
       
@@ -167,10 +167,10 @@ router.post('/google', async (req, res) => {
         isVerified: true 
       });
 
-      // Create empty cart for new user
+      
       await Cart.create({ userId: user._id, items: [] });
 
-      // Notify Admin
+      
       await Notification.create({
         userId: null,
         title: 'New User Registered (Google)',
@@ -179,7 +179,7 @@ router.post('/google', async (req, res) => {
         link: '/admin/users'
       });
     } else {
-      // If user exists but is not verified, verify them since Google authenticated them
+      
       if (!user.isVerified) {
         user.isVerified = true;
         await user.save();

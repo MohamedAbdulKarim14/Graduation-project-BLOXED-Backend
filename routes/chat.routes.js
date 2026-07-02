@@ -2,20 +2,20 @@ const router = require('express').Router();
 const Product = require('../models/Product.model');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Initialize Gemini API
+
 const genAI = new GoogleGenerativeAI(process.env.AI_API_KEY);
 
-// GET /api/chat - AI Chatbot endpoint
+
 router.post('/', async (req, res) => {
   try {
     const { message } = req.body;
     if (!message) return res.status(400).json({ message: 'Message is required' });
 
-    // 1. Fetch products to give the AI context of the store
-    // (In a real massive store, we'd use vector search, but for small DB this is fine)
+    
+    
     const products = await Product.find().select('name price stock description categoryIds').populate('categoryIds', 'name');
     
-    // 2. Build context string
+    
     const storeContext = `
 أنت موظف خدمة العملاء والدعم الفني في متجر BLOXED. أنت ودود واحترافي وتتعامل كإنسان طبيعي.
 مهم جداً: لا تقل أبداً أنك ذكاء اصطناعي (AI) أو روبوت. تحدث دائماً بصيغة موظف مبيعات حقيقي يعمل في المتجر.

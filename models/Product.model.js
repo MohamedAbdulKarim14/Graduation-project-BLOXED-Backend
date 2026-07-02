@@ -22,6 +22,8 @@ const ProductSchema = new mongoose.Schema(
       }
     ],
     categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+    averageRating: { type: Number, default: 0 },
+    numReviews: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

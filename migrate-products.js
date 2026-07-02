@@ -10,7 +10,7 @@ async function migrate() {
     const products = await Product.find({});
     for (let p of products) {
       if (!p.images || p.images.length === 0) {
-        // Use the main imageUrl as the first image, and add some dummies
+        
         const base = p.imageUrl || `https://placehold.co/800x600/1e1e1e/aaa?text=${encodeURIComponent(p.name)}`;
         p.images = [
           base,

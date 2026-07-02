@@ -4,11 +4,11 @@ const Product     = require('../models/Product.model');
 const verifyToken = require('../middleware/auth.middleware');
 const isAdmin     = require('../middleware/admin.middleware');
 
-// ─── GET /api/categories ───────────────────────────────────────────────────────────
+
 router.get('/', async (req, res) => {
   try {
     const categories = await Category.find();
-    // Count products per category
+    
     const categoriesWithCount = await Promise.all(
       categories.map(async (category) => {
         const count = await Product.countDocuments({ categoryIds: category._id });
@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ─── GET /api/categories/:id ───────────────────────────────────────────────────────
+
 router.get('/:id', async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -32,7 +32,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ─── POST /api/categories (admin) ──────────────────────────────────────────────────
+
 router.post('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const category = await Category.create(req.body);
@@ -42,7 +42,7 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── PUT /api/categories/:id (admin) ───────────────────────────────────────────────
+
 router.put('/:id', verifyToken, isAdmin, async (req, res) => {
   try {
     const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -53,7 +53,7 @@ router.put('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// ─── DELETE /api/categories/:id (admin) ───────────────────────────────────────────
+
 router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
   try {
     await Category.findByIdAndDelete(req.params.id);
